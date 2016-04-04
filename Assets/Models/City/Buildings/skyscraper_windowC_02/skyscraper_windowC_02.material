@@ -1,0 +1,102 @@
+material skyscraper_windowC_02/Windx4_H
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5880 0.5880 0.5880 1
+			diffuse 0.5880 0.5880 0.5880 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Windx4_H.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowC_02/PaveGy_DSG
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.0000 0.0000 0.0000 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "PaveGy_D.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowC_02/Windx4_C
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5880 0.5880 0.5880 1
+			diffuse 0.5880 0.5880 0.5880 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Windx4_C.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowC_02/Door_ASG
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.0000 0.0000 0.0000 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Door_A.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowC_02/ConcES_ESG
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.0000 0.0000 0.0000 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "ConcES_E.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowC_02/Material__1061
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.5000 0.5000 0.5000 1
+			specular 1.3945 1.3506 1.1145 2
+			texture_unit
+			{
+				texture "Windx4_H.bmp"
+			}
+		}
+	}
+}
+

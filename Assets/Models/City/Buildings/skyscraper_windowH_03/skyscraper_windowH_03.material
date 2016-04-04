@@ -1,0 +1,64 @@
+material skyscraper_windowH_03/wire_184155229
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.7216 0.6078 0.8980 1
+			diffuse 0.7216 0.6078 0.8980 1
+			specular 0.3500 0.3500 0.3500 2
+		}
+	}
+}
+
+material skyscraper_windowH_03/Door_ASG
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.0000 0.0000 0.0000 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Door_A.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowH_03/PaveGy_FSG
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.0000 0.0000 0.0000 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "PaveGy_F.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowH_03/Material__1088
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5880 0.5880 0.5880 1
+			diffuse 0.5880 0.5880 0.5880 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Windx4_H.bmp"
+			}
+		}
+	}
+}
+

@@ -1,0 +1,51 @@
+material skyscraper_windowB_03/Windx4_B
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5880 0.5880 0.5880 1
+			diffuse 0.5880 0.5880 0.5880 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Windx4_B.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowB_03/PaveGy_FSG
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.0000 0.0000 0.0000 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "PaveGy_F.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowB_03/DoorDb_BSG
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.0000 0.0000 0.0000 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "DoorDb_B.bmp"
+			}
+		}
+	}
+}
+

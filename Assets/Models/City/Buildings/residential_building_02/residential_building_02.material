@@ -1,0 +1,68 @@
+material residential_building_02/Facade_B
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5882 0.5882 0.5882 1
+			diffuse 0.5882 0.5882 0.5882 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Facad1_B.bmp"
+			}
+		}
+	}
+}
+
+material residential_building_02/Shops_B
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5880 0.5880 0.5880 1
+			diffuse 0.5880 0.5880 0.5880 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Shops1_B.bmp"
+			}
+		}
+	}
+}
+
+material residential_building_02/Roof_B
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5880 0.5880 0.5880 1
+			diffuse 0.5880 0.5880 0.5880 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Roof-B.bmp"
+			}
+		}
+	}
+}
+
+material residential_building_02/Tiles_B
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5880 0.5880 0.5880 1
+			diffuse 0.5880 0.5880 0.5880 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Tiles-B.bmp"
+			}
+		}
+	}
+}
+

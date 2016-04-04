@@ -1,0 +1,51 @@
+material skyscraper_windowE_08/PaveGy_DSG
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.0000 0.0000 0.0000 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "PaveGy_D.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowE_08/Windx4_E
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5880 0.5880 0.5880 1
+			diffuse 0.5880 0.5880 0.5880 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Windx4_E.bmp"
+			}
+		}
+	}
+}
+
+material skyscraper_windowE_08/Door_ASG
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.0000 0.0000 0.0000 1
+			diffuse 0.0000 0.0000 0.0000 1
+			specular 0.0000 0.0000 0.0000 2
+			texture_unit
+			{
+				texture "Door_A.bmp"
+			}
+		}
+	}
+}
+

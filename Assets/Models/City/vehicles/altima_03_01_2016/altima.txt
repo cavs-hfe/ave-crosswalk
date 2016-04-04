@@ -1,0 +1,10 @@
+Vehicle:   altima_rot_trans_scaled.obj
+
+target pop.:              (x, y, z )
+ 5% female:   235.17, 122.44, 34.0
+
+50% female:  239.84, 126.56, 34.0
+
+50% male:     245.72, 131.04, 34.0
+
+95% male:    250.85, 135.23, 34.0

@@ -1,0 +1,88 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 28.05.2015 11:29:09
+
+newmtl Windx4_H
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka Windx4_H.bmp
+	map_Kd Windx4_H.bmp
+
+newmtl PaveGy_DSG
+	Ns 10000.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.0000 0.0000 0.0000
+	Kd 0.0000 0.0000 0.0000
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka PaveGy_D.bmp
+	map_Kd PaveGy_D.bmp
+
+newmtl Windx4_C
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka Windx4_C.bmp
+	map_Kd Windx4_C.bmp
+
+newmtl Door_ASG
+	Ns 10000.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.0000 0.0000 0.0000
+	Kd 0.0000 0.0000 0.0000
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka Door_A.bmp
+	map_Kd Door_A.bmp
+
+newmtl ConcES_ESG
+	Ns 10000.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.0000 0.0000 0.0000
+	Kd 0.0000 0.0000 0.0000
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka ConcES_E.bmp
+	map_Kd ConcES_E.bmp
+
+newmtl Material__1061
+	Ns 59.0000
+	Ni 1.0000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.0000 0.0000 0.0000
+	Kd 0.5000 0.5000 0.5000
+	Ks 1.3945 1.3506 1.1145
+	Ke 0.0000 0.0000 0.0000
+	map_Ka Windx4_H.bmp
+	map_Kd Windx4_H.bmp
+	map_bump Windx4_H.bmp
+	bump Windx4_H.bmp
