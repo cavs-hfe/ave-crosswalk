@@ -281,6 +281,7 @@ public class ExperimentController : MonoBehaviour
                 float goSignalDelay = fadeInDelay + trafficLightChangeDelay + trafficLightYellowInterval + vehicleClearanceInterval + walkInterval;
 
                 //Debug.Log("Go signal delay: " + goSignalDelay);
+                recorder.logEventToRecording("Go signal delay", "Go signal delay: " + goSignalDelay);
 
                 timer = goSignalDelay;
 
@@ -289,6 +290,7 @@ public class ExperimentController : MonoBehaviour
                 {
                     targetVehicle.SetActive(false);
                     Debug.Log("Condition 0: trial car disabled.");
+                    recorder.logEventToRecording("Condition 0", "Condition 0: trial car disabled.");
                 }
                 else
                 {
@@ -296,6 +298,7 @@ public class ExperimentController : MonoBehaviour
 
                     Debug.Log("Condition " + condition + ":");
                     Debug.Log("trial car offset: " + trialCarOffset);
+                    recorder.logEventToRecording("Condition " + condition, "Condition " + condition + ": trial car offset: " + trialCarOffset);
 
                     //if we're an even condition we need to flip the car around for the near lane trials
                     if (condition % 2 == 0)
@@ -309,6 +312,7 @@ public class ExperimentController : MonoBehaviour
                     targetVehicle.transform.position = trialCarPosition;
 
                     Debug.Log("new trial car position: " + trialCarPosition.ToString());
+                    recorder.logEventToRecording("new trial car position", "new trial car position: " + trialCarPosition.ToString());
                 }
                 cameraFade.FadeIn(false);
                 break;
@@ -365,6 +369,7 @@ public class ExperimentController : MonoBehaviour
                 if (timer < trafficLightChangeDelay && controller != null)
                 {
                     controller.toggle(trafficLightYellowInterval, vehicleClearanceInterval);
+                    recorder.logEventToRecording("Traffic Light Change", "Toggle traffic light - yellow & clearance intervals, " + trafficLightYellowInterval + "," + vehicleClearanceInterval);
                     trafficLightChangeDelay = -999f;
                 }
                 if (timer > 0)

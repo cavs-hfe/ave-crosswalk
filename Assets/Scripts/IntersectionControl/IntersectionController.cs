@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using CAVS.Recording;
 
 namespace CAVS.IntersectionControl{
 
-	public class IntersectionController : MonoBehaviour {
+	public class IntersectionController : PlaybackActorBehavior {
 
 		[SerializeField]
 		private List<StopLightBehavior> northSouthStopLights;
@@ -156,14 +157,17 @@ namespace CAVS.IntersectionControl{
 
 		}
 
+        public override void handleEvent(string name, string contents)
+        {
+            Debug.Log("handle event");
 
-
-		// Update is called once per frame
-		void Update () {
-		
-			//demo ();
-
-		}
+            if (name.Equals("Traffic Light Change"))
+            {
+                string[] parts = contents.Split(',');
+                toggle(float.Parse(parts[1]), float.Parse(parts[2]));
+                Debug.Log("Toggling lights from playback: " + float.Parse(parts[1]) + "," + float.Parse(parts[2]));
+            }
+        }
 
 	}
 
