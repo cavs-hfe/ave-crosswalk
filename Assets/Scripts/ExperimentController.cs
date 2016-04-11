@@ -6,7 +6,22 @@ using System.Collections.Generic;
 using CAVS.IntersectionControl;
 using CAVS.Recording;
 using VRStandardAssets.Utils;
+using System;
 
+
+/// <summary>
+/// Conditions:
+/// 0 - no car
+/// 1 - stop at line far
+/// 2 - stop at line near
+/// 3 - near miss front far
+/// 4 - near miss front near
+/// 5 - near miss back far
+/// 6 - near miss back near
+/// 7 - hit far
+/// 8 - hit near
+/// 
+/// </summary>
 public class ExperimentController : MonoBehaviour
 {
     //needed by all
@@ -20,7 +35,18 @@ public class ExperimentController : MonoBehaviour
     public int runNumber = 0;
     public int condition = 0;
 
-    public Queue<int> conditions = new Queue<int>(new[] { 0, 3, 4, 5, 6, 7, 8 });
+    public int[][] conditionMatrix = new int[][] 
+    { 
+        new int[] { 3, 4, 5, 6, 7, 8 },
+        new int[] { 4, 6, 3, 8, 5, 7 },
+        new int[] { 5, 8, 4, 7, 3, 6 },
+        new int[] { 6, 7, 8, 3, 4, 5 },
+        new int[] { 7, 5, 6, 4, 8, 3 },
+        new int[] { 8, 3, 7, 5, 6, 4 }
+    };
+
+    //public Queue<int> conditions = new Queue<int>(new[] { 0, 3, 4, 5, 6, 7, 8 });
+    public Queue<int> conditions;
 
     //needed by lobby
     private GameObject targetOne;
@@ -34,6 +60,7 @@ public class ExperimentController : MonoBehaviour
 
     private GameObject lobbyInstructions;
     private GameObject breakInstructions;
+    private GameObject ssqInstructions;
     private GameObject finishedInstructions;
 
     private bool onBreak = false;
@@ -57,7 +84,7 @@ public class ExperimentController : MonoBehaviour
     [SerializeField]
     private float timer = 10.0f;
 
-    public GameObject targetVehicle;
+    private GameObject targetVehicle;
     //public Queue<GameObject> preTargetCars;
     //public Queue<GameObject> crossTrafficCars;
 
@@ -86,6 +113,7 @@ public class ExperimentController : MonoBehaviour
 
     void Start()
     {
+        //find game objects and setup callbacks
         motionBase = GameObject.FindGameObjectWithTag("Player");
 
         if (motionBase != null)
@@ -106,11 +134,47 @@ public class ExperimentController : MonoBehaviour
 
         recorder = GetComponent<RecordingServiceBehavior>();
 
-        //Don't destroy the motion tracking base when you load the lobby
+        //Don't destroy the motion tracking base or this when you load the lobby
         DontDestroyOnLoad(motionBase);
         DontDestroyOnLoad(this.gameObject);
 
+        //save initial traffic change delay
         originalTrafficChangeDelay = trafficLightChangeDelay;
+
+        //setup conditions
+        int[] conditionOrder = conditionMatrix[participantID % 6];
+
+        List<int> blockList;
+        conditions = new Queue<int>();
+
+        for (int i = 0; i < conditionOrder.Length; i++)
+        {
+            blockList = new List<int>();
+            blockList.Add(conditionOrder[i]);
+            blockList.Add(0);
+            blockList.Add(0);
+            blockList.Add(0);
+            blockList.Add(1);
+            blockList.Add(1);
+            blockList.Add(1);
+            blockList.Add(2);
+            blockList.Add(2);
+            blockList.Add(2);
+            blockList = Shuffle(blockList);
+
+            string message = "Shuffled block " + i + ", adding to queue:";
+
+            foreach (int j in blockList)
+            {
+                conditions.Enqueue(j);
+                message += j + " ";
+            }
+
+            Debug.Log(message);
+        }
+
+        Debug.Log("Final condition queue:" + conditions.ToString());
+
 
         //load lobby
         SceneManager.LoadScene(1);
@@ -132,20 +196,21 @@ public class ExperimentController : MonoBehaviour
                     motionBase.transform.position = new Vector3(0.0f, 1.3f, 0.0f);
                 }
 
+                //find lobby game objects and register callbacks
                 lobbyInstructions = GameObject.FindGameObjectWithTag("LobbyInstructions");
                 lobbyInstructions.SetActive(false);
+                lobbyInstructions.GetComponentInChildren<SelectionSlider>().OnBarFilled += slider_OnBarFilled;
 
                 breakInstructions = GameObject.FindGameObjectWithTag("BreakInstructions");
                 breakInstructions.SetActive(false);
+                breakInstructions.GetComponentInChildren<SelectionSlider>().OnBarFilled += slider_OnBarFilled;
+
+                ssqInstructions = GameObject.FindGameObjectWithTag("SSQInstructions");
+                ssqInstructions.SetActive(false);
+                ssqInstructions.GetComponentInChildren<SelectionSlider>().OnBarFilled += slider_OnBarFilled;
 
                 finishedInstructions = GameObject.FindGameObjectWithTag("FinishedInstructions");
                 finishedInstructions.SetActive(false);
-
-                SelectionSlider slider = lobbyInstructions.GetComponentInChildren<SelectionSlider>();
-                slider.OnBarFilled += slider_OnBarFilled;
-
-                SelectionSlider slider2 = breakInstructions.GetComponentInChildren<SelectionSlider>();
-                slider2.OnBarFilled += slider_OnBarFilled;
 
                 targetOne = GameObject.FindGameObjectWithTag("TargetOne");
                 targetTwo = GameObject.FindGameObjectWithTag("TargetTwo");
@@ -165,7 +230,13 @@ public class ExperimentController : MonoBehaviour
                     targetTwoFadedOut = true;
                 }
 
-                if (runNumber > 0 && runNumber % numberOfRunsBeforeBreak == 0)
+                //if it is time to ask the user for a SSQ, show the SSQ instructions
+                if (runNumber > 0 && runNumber % numberOfRunsBeforeSSQ == 0)
+                {
+                    ssqInstructions.SetActive(true);
+                    onBreak = true;
+                }
+                else if (runNumber > 0 && runNumber % numberOfRunsBeforeBreak == 0) //else if time for break, show break instructions
                 {
                     breakInstructions.SetActive(true);
                     onBreak = true;
@@ -209,7 +280,7 @@ public class ExperimentController : MonoBehaviour
                 //time from start of vehicle movement to ped light green, in s
                 float goSignalDelay = fadeInDelay + trafficLightChangeDelay + trafficLightYellowInterval + vehicleClearanceInterval + walkInterval;
 
-                Debug.Log("Go signal delay: " + goSignalDelay);
+                //Debug.Log("Go signal delay: " + goSignalDelay);
 
                 timer = goSignalDelay;
 
@@ -372,6 +443,7 @@ public class ExperimentController : MonoBehaviour
         if (onBreak)
         {
             breakInstructions.SetActive(false);
+            ssqInstructions.SetActive(false);
             onBreak = false;
         }
         else
@@ -416,5 +488,26 @@ public class ExperimentController : MonoBehaviour
                 break;
         }
         return trialCarOffset;
+    }
+
+    public static List<int> Shuffle(List<int> aList)
+    {
+
+        System.Random _random = new System.Random(Guid.NewGuid().GetHashCode());
+
+        int obj;
+
+        int n = aList.Count;
+        for (int i = 0; i < n; i++)
+        {
+            // NextDouble returns a random number between 0 and 1.
+            // ... It is equivalent to Math.random() in Java.
+            int r = i + (int)(_random.NextDouble() * (n - i));
+            obj = aList[r];
+            aList[r] = aList[i];
+            aList[i] = obj;
+        }
+
+        return aList;
     }
 }
