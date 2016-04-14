@@ -175,6 +175,7 @@ public class ExperimentController : MonoBehaviour
 
         Debug.Log("Final condition queue:" + conditions.ToString());
 
+        //UnityEngine.VR.VRSettings.showDeviceView = false;
 
         //load lobby
         SceneManager.LoadScene(1);
@@ -284,6 +285,17 @@ public class ExperimentController : MonoBehaviour
                 recorder.logEventToRecording("Go signal delay", "Go signal delay: " + goSignalDelay);
 
                 timer = goSignalDelay;
+
+                //if we are not in a stop at line condition, disable decel volumes
+                if (condition == 0 || condition > 2)
+                {
+                    GameObject[] decelVolumes = GameObject.FindGameObjectsWithTag("Decelerate");
+                    foreach (GameObject go in decelVolumes)
+                    {
+                        go.SetActive(false);
+                    }
+                }
+
 
                 //if condition == 0, we are in the no car condition, disable target car
                 if (condition == 0)
@@ -469,8 +481,10 @@ public class ExperimentController : MonoBehaviour
                 trialCarOffset = 999.9f;
                 break;
             case 1:         //stop at line far
+                trialCarOffset = goSignalDelay * vehicleSpeed;
                 break;
             case 2:         //stop at line near
+                trialCarOffset = -goSignalDelay * vehicleSpeed;
                 break;
             case 3:         //near miss front far
                 //trialCarOffset = (goSignalDelay + (startPositionOffset + (streetWidth / 2)) / walkingSpeed) * vehicleSpeed;
