@@ -79,6 +79,9 @@ public class ExperimentController : MonoBehaviour
     private IntersectionController controller;
     private Vector3 motionBaseStartPosition = new Vector3(77.32f, 1.3f, -48.28f);
 
+    private bool isFirstTimeInCity = true;
+    private GameObject exitTarget;
+
     private RecordingServiceBehavior recorder;
 
     [SerializeField]
@@ -120,6 +123,7 @@ public class ExperimentController : MonoBehaviour
         {
             guiArrows = motionBase.GetComponentInChildren<GUIArrows>();
             cameraFade = motionBase.GetComponentInChildren<VRCameraFade>();
+            cameraFade.OnFadeComplete += cameraFade_OnFadeComplete;
             HeadTriggerEventScript ht = motionBase.GetComponentInChildren<HeadTriggerEventScript>();
             if (ht != null)
             {
@@ -177,8 +181,8 @@ public class ExperimentController : MonoBehaviour
 
         //UnityEngine.VR.VRSettings.showDeviceView = false;
 
-        //load lobby
-        SceneManager.LoadScene(1);
+        //load familiarization
+        SceneManager.LoadScene(2);
     }
 
     void OnLevelWasLoaded(int level)
@@ -248,15 +252,6 @@ public class ExperimentController : MonoBehaviour
             case 2: //City
                 Debug.Log("Scene Loaded: City");
 
-                condition = conditions.Dequeue();
-
-                if (recorder != null && !recorder.currentelyRecording())
-                {
-                    recorder.startRecording("PedSimCity_" + participantID + "_Run" + runNumber + "_Condition" + condition);
-                }
-
-                trafficLightChangeDelay = originalTrafficChangeDelay;
-
                 if (motionBase != null)
                 {
                     motionBase.transform.position = motionBaseStartPosition;
@@ -275,56 +270,89 @@ public class ExperimentController : MonoBehaviour
 
                 targetVehicle = GameObject.FindGameObjectWithTag("TrialVehicle");
 
-                //period that the pedestrain light counts down to RED/DON'T WALK in s
-                //float pedestrianChangeInterval = streetWidth / walkingSpeed;
+                exitTarget = GameObject.FindGameObjectWithTag("TargetOne");
+                exitTarget.SetActive(false);
 
-                //time from start of vehicle movement to ped light green, in s
-                float goSignalDelay = fadeInDelay + trafficLightChangeDelay + trafficLightYellowInterval + vehicleClearanceInterval + walkInterval;
-
-                //Debug.Log("Go signal delay: " + goSignalDelay);
-                recorder.logEventToRecording("Go signal delay", "Go signal delay: " + goSignalDelay);
-
-                timer = goSignalDelay;
-
-                //if we are not in a stop at line condition, disable decel volumes
-                if (condition == 0 || condition > 2)
+                //if this is the first time in the city, run the task familiarization routine
+                if (isFirstTimeInCity)
                 {
-                    GameObject[] decelVolumes = GameObject.FindGameObjectsWithTag("Decelerate");
-                    foreach (GameObject go in decelVolumes)
+                    //disable traffic
+                    targetVehicle.SetActive(false);
+                    GameObject[] traffic = GameObject.FindGameObjectsWithTag("Traffic");
+                    foreach (GameObject go in traffic)
                     {
                         go.SetActive(false);
                     }
-                }
 
+                    //set traffic light change
+                    controller.toggle(10);
 
-                //if condition == 0, we are in the no car condition, disable target car
-                if (condition == 0)
-                {
-                    targetVehicle.SetActive(false);
-                    Debug.Log("Condition 0: trial car disabled.");
-                    recorder.logEventToRecording("Condition 0", "Condition 0: trial car disabled.");
+                    //countdown until exit target appears
+                    timer = 15f;
                 }
                 else
                 {
-                    float trialCarOffset = calculateTrialCarOffset(goSignalDelay);
 
-                    Debug.Log("Condition " + condition + ":");
-                    Debug.Log("trial car offset: " + trialCarOffset);
-                    recorder.logEventToRecording("Condition " + condition, "Condition " + condition + ": trial car offset: " + trialCarOffset);
+                    condition = conditions.Dequeue();
 
-                    //if we're an even condition we need to flip the car around for the near lane trials
-                    if (condition % 2 == 0)
+                    if (recorder != null && !recorder.currentelyRecording())
                     {
-                        targetVehicle.transform.Rotate(Vector3.up, 180);
-                        targetVehicle.transform.position = new Vector3(targetVehicle.transform.position.x, 0, -49.8f);
+                        recorder.startRecording("PedSimCity_" + participantID + "_Run" + runNumber + "_Condition" + condition);
                     }
 
-                    Vector3 trialCarPosition = new Vector3(targetVehicle.transform.position.x + trialCarOffset, 0, targetVehicle.transform.position.z);
+                    trafficLightChangeDelay = originalTrafficChangeDelay;
 
-                    targetVehicle.transform.position = trialCarPosition;
+                    //period that the pedestrain light counts down to RED/DON'T WALK in s
+                    //float pedestrianChangeInterval = streetWidth / walkingSpeed;
 
-                    Debug.Log("new trial car position: " + trialCarPosition.ToString());
-                    recorder.logEventToRecording("new trial car position", "new trial car position: " + trialCarPosition.ToString());
+                    //time from start of vehicle movement to ped light green, in s
+                    float goSignalDelay = fadeInDelay + trafficLightChangeDelay + trafficLightYellowInterval + vehicleClearanceInterval + walkInterval;
+
+                    //Debug.Log("Go signal delay: " + goSignalDelay);
+                    recorder.logEventToRecording("Go signal delay", "Go signal delay: " + goSignalDelay);
+
+                    timer = goSignalDelay;
+
+                    //if we are not in a stop at line condition, disable decel volumes
+                    if (condition == 0 || condition > 2)
+                    {
+                        GameObject[] decelVolumes = GameObject.FindGameObjectsWithTag("Decelerate");
+                        foreach (GameObject go in decelVolumes)
+                        {
+                            go.SetActive(false);
+                        }
+                    }
+
+
+                    //if condition == 0, we are in the no car condition, disable target car
+                    if (condition == 0)
+                    {
+                        targetVehicle.SetActive(false);
+                        Debug.Log("Condition 0: trial car disabled.");
+                        recorder.logEventToRecording("Condition 0", "Condition 0: trial car disabled.");
+                    }
+                    else
+                    {
+                        float trialCarOffset = calculateTrialCarOffset(goSignalDelay);
+
+                        Debug.Log("Condition " + condition + ":");
+                        Debug.Log("trial car offset: " + trialCarOffset);
+                        recorder.logEventToRecording("Condition " + condition, "Condition " + condition + ": trial car offset: " + trialCarOffset);
+
+                        //if we're an even condition we need to flip the car around for the near lane trials
+                        if (condition % 2 == 0)
+                        {
+                            targetVehicle.transform.Rotate(Vector3.up, 180);
+                            targetVehicle.transform.position = new Vector3(targetVehicle.transform.position.x, 0, -49.8f);
+                        }
+
+                        Vector3 trialCarPosition = new Vector3(targetVehicle.transform.position.x + trialCarOffset, 0, targetVehicle.transform.position.z);
+
+                        targetVehicle.transform.position = trialCarPosition;
+
+                        Debug.Log("new trial car position: " + trialCarPosition.ToString());
+                        recorder.logEventToRecording("new trial car position", "new trial car position: " + trialCarPosition.ToString());
+                    }
                 }
                 cameraFade.FadeIn(false);
                 break;
@@ -378,15 +406,29 @@ public class ExperimentController : MonoBehaviour
                 }
                 break;
             case 2: //City
-                if (timer < trafficLightChangeDelay && controller != null)
+                if (isFirstTimeInCity)
                 {
-                    controller.toggle(trafficLightYellowInterval, vehicleClearanceInterval);
-                    recorder.logEventToRecording("Traffic Light Change", "Toggle traffic light - yellow & clearance intervals, " + trafficLightYellowInterval + "," + vehicleClearanceInterval);
-                    trafficLightChangeDelay = -999f;
+                    if (timer > 0)
+                    {
+                        timer = timer - Time.deltaTime;
+                    }
+                    else if(exitTarget.activeSelf == false)
+                    {
+                        exitTarget.SetActive(true);
+                    }
                 }
-                if (timer > 0)
+                else
                 {
-                    timer = timer - Time.deltaTime;
+                    if (timer < trafficLightChangeDelay && controller != null)
+                    {
+                        controller.toggle(trafficLightYellowInterval, vehicleClearanceInterval);
+                        recorder.logEventToRecording("Traffic Light Change", "Toggle traffic light - yellow & clearance intervals, " + trafficLightYellowInterval + "," + vehicleClearanceInterval);
+                        trafficLightChangeDelay = -999f;
+                    }
+                    if (timer > 0)
+                    {
+                        timer = timer - Time.deltaTime;
+                    }
                 }
                 break;
             default:
@@ -419,14 +461,18 @@ public class ExperimentController : MonoBehaviour
             case 2: //city
                 if (tag.Equals("Finish"))
                 {
-                    //stop recording
-                    if (recorder != null && recorder.currentelyRecording())
+                    if (!isFirstTimeInCity)
                     {
-                        recorder.stopAndSaveRecording(new[] { RecordingFileFormat.XML, RecordingFileFormat.CSV });
+                        //stop recording
+                        if (recorder != null && recorder.currentelyRecording())
+                        {
+                            recorder.stopAndSaveRecording(new[] { RecordingFileFormat.XML, RecordingFileFormat.CSV });
+                        }
+
+                        //return to lobby
+                        runNumber++;
                     }
 
-                    //return to lobby
-                    runNumber++;
                     cameraFade.FadeOut(false);
                     readyToChangeScene = true;
                 }
@@ -438,6 +484,7 @@ public class ExperimentController : MonoBehaviour
 
     void cameraFade_OnFadeComplete()
     {
+        Debug.Log("fade complete");
         if (readyToChangeScene)
         {
             switch (SceneManager.GetActiveScene().buildIndex)
@@ -446,6 +493,8 @@ public class ExperimentController : MonoBehaviour
                     SceneManager.LoadScene(2);
                     break;
                 case 2:
+                    Debug.Log("Faded out of city, load lobby");
+                    isFirstTimeInCity = false;
                     SceneManager.LoadScene(1);
                     break;
                 default:
@@ -467,7 +516,6 @@ public class ExperimentController : MonoBehaviour
         {
             cameraFade.FadeOut(false);
             readyToChangeScene = true;
-            cameraFade.OnFadeComplete += cameraFade_OnFadeComplete;
         }
 
     }
