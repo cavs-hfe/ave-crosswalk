@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.VR;
 using System.Collections;
 using System.Collections.Generic;
 using CAVS.IntersectionControl;
@@ -24,6 +25,15 @@ using System;
 /// </summary>
 public class ExperimentController : MonoBehaviour
 {
+    private enum HeadsetType
+    {
+        Unknown = 0,
+        Oculus = 1,
+        OpenVR = 2
+    }
+
+    private HeadsetType currentDevice;
+
     //needed by all
     private GameObject motionBase;
     private GUIArrows guiArrows;
@@ -77,7 +87,8 @@ public class ExperimentController : MonoBehaviour
 
     //needed by city
     private IntersectionController controller;
-    private Vector3 motionBaseStartPosition = new Vector3(77.32f, 1.3f, -48.28f);
+    private Vector3 oculusMotionBaseStartPosition = new Vector3(77.32f, 1.3f, -48.28f);
+    private Vector3 openVRMotionBaseStartPosition = new Vector3(77.32f, 0f, -48.28f);
 
     private bool isFirstTimeInCity = true;
     private GameObject exitTarget;
@@ -116,24 +127,50 @@ public class ExperimentController : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("VR Device: " + VRSettings.loadedDeviceName);
+
+        if (VRSettings.loadedDeviceName.Equals("OpenVR"))
+        {
+            currentDevice = HeadsetType.OpenVR;
+        }
+        else if (VRSettings.loadedDeviceName.Equals("Oculus"))
+        {
+            currentDevice = HeadsetType.Oculus;
+        }
+        else
+        {
+            currentDevice = HeadsetType.Unknown;
+        }
+
         //find game objects and setup callbacks
-        motionBase = GameObject.FindGameObjectWithTag("Player");
+        if (currentDevice == HeadsetType.OpenVR)
+        {
+            motionBase = GameObject.FindGameObjectWithTag("OpenVRPlayer");
+            GameObject.FindGameObjectWithTag("OculusPlayer").SetActive(false);
+        }
+        else if (currentDevice == HeadsetType.Oculus)
+        {
+            motionBase = GameObject.FindGameObjectWithTag("OculusPlayer");
+            GameObject.FindGameObjectWithTag("OpenVRPlayer").SetActive(false);
+        }
 
         if (motionBase != null)
         {
             guiArrows = motionBase.GetComponentInChildren<GUIArrows>();
+            if (guiArrows != null)
+            {
+                guiArrows.Hide();
+            }
             cameraFade = motionBase.GetComponentInChildren<VRCameraFade>();
-            cameraFade.OnFadeComplete += cameraFade_OnFadeComplete;
+            if (cameraFade != null)
+            {
+                cameraFade.OnFadeComplete += cameraFade_OnFadeComplete;
+            }
             HeadTriggerEventScript ht = motionBase.GetComponentInChildren<HeadTriggerEventScript>();
             if (ht != null)
             {
                 ht.OnHeadTriggered += ht_OnHeadTriggered;
             }
-        }
-
-        if (guiArrows != null)
-        {
-            guiArrows.Hide();
         }
 
         recorder = GetComponent<RecordingServiceBehavior>();
@@ -198,7 +235,14 @@ public class ExperimentController : MonoBehaviour
 
                 if (motionBase != null)
                 {
-                    motionBase.transform.position = new Vector3(0.0f, 1.3f, 0.0f);
+                    if (currentDevice == HeadsetType.Oculus)
+                    {
+                        motionBase.transform.position = new Vector3(0.0f, 1.3f, 0.0f);
+                    }
+                    else if (currentDevice == HeadsetType.OpenVR)
+                    {
+                        motionBase.transform.position = new Vector3(0.0f, 0f, 0.0f);
+                    }
                 }
 
                 //find lobby game objects and register callbacks
@@ -254,7 +298,15 @@ public class ExperimentController : MonoBehaviour
 
                 if (motionBase != null)
                 {
-                    motionBase.transform.position = motionBaseStartPosition;
+                    if (currentDevice == HeadsetType.Oculus)
+                    {
+                        motionBase.transform.position = oculusMotionBaseStartPosition;
+                    }
+                    else if (currentDevice == HeadsetType.OpenVR)
+                    {
+                        motionBase.transform.position = openVRMotionBaseStartPosition;
+                    }
+
                     if (runNumber > 0)
                     {
                         motionBase.transform.Rotate(Vector3.up, 180f);
@@ -377,8 +429,8 @@ public class ExperimentController : MonoBehaviour
                         targetOne.SetActive(true);
                         targetOneImage.CrossFadeAlpha(1.0f, 1.0f, true);
                         targetOneFadedOut = false;
-                        guiArrows.SetDesiredDirection(targetTwo.transform); //set initial direction to target two to get user to look at target one
-                        guiArrows.Show();
+                        //guiArrows.SetDesiredDirection(targetTwo.transform); //set initial direction to target two to get user to look at target one
+                        //guiArrows.Show();
                     }
                     else if (!onBreak)
                     {
@@ -387,16 +439,16 @@ public class ExperimentController : MonoBehaviour
                             targetTwo.SetActive(true);
                             targetTwoImage.CrossFadeAlpha(1.0f, 1.0f, true);
                             targetTwoFadedOut = false;
-                            guiArrows.SetDesiredDirection(targetOne.transform); //set initial direction to target one to get user to look at target one
-                            guiArrows.Show();
+                            //guiArrows.SetDesiredDirection(targetOne.transform); //set initial direction to target one to get user to look at target one
+                            //guiArrows.Show();
                         }
                         else
                         {
                             targetOne.SetActive(true);
                             targetOneImage.CrossFadeAlpha(1.0f, 1.0f, true);
                             targetOneFadedOut = false;
-                            guiArrows.SetDesiredDirection(targetTwo.transform); //set initial direction to target two to get user to look at target one
-                            guiArrows.Show();
+                            //guiArrows.SetDesiredDirection(targetTwo.transform); //set initial direction to target two to get user to look at target one
+                            //guiArrows.Show();
                         }
                     }
                 }
@@ -412,7 +464,7 @@ public class ExperimentController : MonoBehaviour
                     {
                         timer = timer - Time.deltaTime;
                     }
-                    else if(exitTarget.activeSelf == false)
+                    else if (exitTarget.activeSelf == false)
                     {
                         exitTarget.SetActive(true);
                     }
@@ -442,19 +494,21 @@ public class ExperimentController : MonoBehaviour
 
     void ht_OnHeadTriggered(string tag)
     {
+        Debug.Log("Head triggered");
+
         switch (SceneManager.GetActiveScene().buildIndex)
         {
             case 1: //lobby
                 //if we're at trigger one, point GUI arrows forward relative to trigger one
                 if (tag.Equals("TargetOne") && !lobbyInstructions.activeSelf)
                 {
-                    guiArrows.SetDesiredDirection(targetOne.transform);
+                    //guiArrows.SetDesiredDirection(targetOne.transform);
                     lobbyInstructions.transform.Rotate(Vector3.up, 180);
                     lobbyInstructions.SetActive(true);
                 }
                 else if (tag.Equals("TargetTwo")) //else if we're at trigger two, point GUI arrows forward relative to trigger two
                 {
-                    guiArrows.SetDesiredDirection(targetTwo.transform);
+                    //guiArrows.SetDesiredDirection(targetTwo.transform);
                     lobbyInstructions.SetActive(true);
                 }
                 break;
@@ -473,8 +527,12 @@ public class ExperimentController : MonoBehaviour
                         runNumber++;
                     }
 
-                    cameraFade.FadeOut(false);
-                    readyToChangeScene = true;
+                    if (cameraFade != null)
+                    {
+                        cameraFade.FadeOut(false);
+                        readyToChangeScene = true;
+                    }
+
                 }
                 break;
             default:

@@ -15,20 +15,31 @@ namespace VRStandardAssets.Utils
         public event Action OnBarFilled;                                    // This event is triggered when the bar finishes filling.
 
 
-        [SerializeField] private float m_Duration = 2f;                     // The length of time it takes for the bar to fill.
+        [SerializeField]
+        private float m_Duration = 2f;                     // The length of time it takes for the bar to fill.
         //[SerializeField] private AudioSource m_Audio;                       // Reference to the audio source that will play effects when the user looks at it and when it fills.
         //[SerializeField] private AudioClip m_OnOverClip;                    // The clip to play when the user looks at the bar.
         //[SerializeField] private AudioClip m_OnFilledClip;                  // The clip to play when the bar finishes filling.
-        [SerializeField] private Slider m_Slider;                           // Optional reference to the UI slider (unnecessary if using a standard Renderer).
-        [SerializeField] private VRInteractiveItem m_InteractiveItem;       // Reference to the VRInteractiveItem to determine when to fill the bar.
-        [SerializeField] private VRInput m_VRInput;                         // Reference to the VRInput to detect button presses.
-        [SerializeField] private GameObject m_BarCanvas;                    // Optional reference to the GameObject that holds the slider (only necessary if DisappearOnBarFill is true).
-        [SerializeField] private Renderer m_Renderer;                       // Optional reference to a renderer (unnecessary if using a UI slider).
-        [SerializeField] private SelectionRadial m_SelectionRadial;         // Optional reference to the SelectionRadial, if non-null the duration of the SelectionRadial will be used instead.
-        [SerializeField] private UIFader m_UIFader;                         // Optional reference to a UIFader, used if the SelectionSlider needs to fade out.
-        [SerializeField] private Collider m_Collider;                       // Optional reference to the Collider used to detect the user's gaze, turned off when the UIFader is not visible.
-        [SerializeField] private bool m_DisableOnBarFill;                   // Whether the bar should stop reacting once it's been filled (for single use bars).
-        [SerializeField] private bool m_DisappearOnBarFill;                 // Whether the bar should disappear instantly once it's been filled.
+        [SerializeField]
+        private Slider m_Slider;                           // Optional reference to the UI slider (unnecessary if using a standard Renderer).
+        [SerializeField]
+        private VRInteractiveItem m_InteractiveItem;       // Reference to the VRInteractiveItem to determine when to fill the bar.
+        [SerializeField]
+        private VRInput m_VRInput;                         // Reference to the VRInput to detect button presses.
+        [SerializeField]
+        private GameObject m_BarCanvas;                    // Optional reference to the GameObject that holds the slider (only necessary if DisappearOnBarFill is true).
+        [SerializeField]
+        private Renderer m_Renderer;                       // Optional reference to a renderer (unnecessary if using a UI slider).
+        [SerializeField]
+        private SelectionRadial m_SelectionRadial;         // Optional reference to the SelectionRadial, if non-null the duration of the SelectionRadial will be used instead.
+        [SerializeField]
+        private UIFader m_UIFader;                         // Optional reference to a UIFader, used if the SelectionSlider needs to fade out.
+        [SerializeField]
+        private Collider m_Collider;                       // Optional reference to the Collider used to detect the user's gaze, turned off when the UIFader is not visible.
+        [SerializeField]
+        private bool m_DisableOnBarFill;                   // Whether the bar should stop reacting once it's been filled (for single use bars).
+        [SerializeField]
+        private bool m_DisappearOnBarFill;                 // Whether the bar should disappear instantly once it's been filled.
 
 
         private bool m_BarFilled;                                           // Whether the bar is currently filled.
@@ -40,10 +51,21 @@ namespace VRStandardAssets.Utils
         private const string k_SliderMaterialPropertyName = "_SliderValue"; // The name of the property on the SlidingUV shader that needs to be changed in order for it to fill.
 
 
-        private void OnEnable ()
+        private void OnEnable()
         {
-            m_VRInput = GameObject.FindGameObjectWithTag("Player").GetComponentInChildren<VRInput>();
-            
+            if (GameObject.FindGameObjectWithTag("OculusPlayer").activeInHierarchy)
+            {
+                m_VRInput = GameObject.FindGameObjectWithTag("OculusPlayer").GetComponentInChildren<VRInput>();
+            }
+            else if (GameObject.FindGameObjectWithTag("OpenVRPlayer").activeInHierarchy)
+            {
+                m_VRInput = GameObject.FindGameObjectWithTag("OpenVRPlayer").GetComponentInChildren<VRInput>();
+            }
+            else
+            {
+                m_VRInput = GameObject.FindGameObjectWithTag("Player").GetComponentInChildren<VRInput>();
+            }
+
             m_VRInput.OnDown += HandleDown;
             m_VRInput.OnUp += HandleUp;
 
@@ -52,7 +74,7 @@ namespace VRStandardAssets.Utils
         }
 
 
-        private void OnDisable ()
+        private void OnDisable()
         {
             m_VRInput.OnDown -= HandleOver;
             m_VRInput.OnUp -= HandleOut;
@@ -62,9 +84,9 @@ namespace VRStandardAssets.Utils
         }
 
 
-        private void Update ()
+        private void Update()
         {
-            if(!m_UIFader)
+            if (!m_UIFader)
                 return;
 
             // If this bar is using a UIFader turn off the collider when it's invisible.
@@ -72,10 +94,10 @@ namespace VRStandardAssets.Utils
         }
 
 
-        public IEnumerator WaitForBarToFill ()
+        public IEnumerator WaitForBarToFill()
         {
             // If the bar should disappear when it's filled, it needs to be visible now.
-            if(m_BarCanvas && m_DisappearOnBarFill)
+            if (m_BarCanvas && m_DisappearOnBarFill)
                 m_BarCanvas.SetActive(true);
 
             // Currently the bar is unfilled.
@@ -83,7 +105,7 @@ namespace VRStandardAssets.Utils
 
             // Reset the timer and set the slider value as such.
             m_Timer = 0f;
-            SetSliderValue (0f);
+            SetSliderValue(0f);
 
             // Keep coming back each frame until the bar is filled.
             while (!m_BarFilled)
@@ -97,7 +119,7 @@ namespace VRStandardAssets.Utils
         }
 
 
-        private IEnumerator FillBar ()
+        private IEnumerator FillBar()
         {
             // When the bar starts to fill, reset the timer.
             m_Timer = 0f;
@@ -113,7 +135,7 @@ namespace VRStandardAssets.Utils
 
                 // Set the value of the slider or the UV based on the normalised time.
                 SetSliderValue(m_Timer / fillTime);
-                
+
                 // Wait until next frame.
                 yield return null;
 
@@ -123,7 +145,7 @@ namespace VRStandardAssets.Utils
 
                 // If the user is no longer looking at the bar, reset the timer and bar and leave the function.
                 m_Timer = 0f;
-                SetSliderValue (0f);
+                SetSliderValue(0f);
                 yield break;
             }
 
@@ -132,7 +154,7 @@ namespace VRStandardAssets.Utils
 
             // If anything has subscribed to OnBarFilled call it now.
             if (OnBarFilled != null)
-                OnBarFilled ();
+                OnBarFilled();
 
             // Play the clip for when the bar is filled.
             //m_Audio.clip = m_OnFilledClip;
@@ -144,19 +166,19 @@ namespace VRStandardAssets.Utils
         }
 
 
-        private void SetSliderValue (float sliderValue)
+        private void SetSliderValue(float sliderValue)
         {
             // If there is a slider component set it's value to the given slider value.
             if (m_Slider)
                 m_Slider.value = sliderValue;
 
             // If there is a renderer set the shader's property to the given slider value.
-            if(m_Renderer)
-                m_Renderer.sharedMaterial.SetFloat (k_SliderMaterialPropertyName, sliderValue);
+            if (m_Renderer)
+                m_Renderer.sharedMaterial.SetFloat(k_SliderMaterialPropertyName, sliderValue);
         }
 
 
-        private void HandleDown ()
+        private void HandleDown()
         {
             // If the user is looking at the bar start the FillBar coroutine and store a reference to it.
             if (m_GazeOver)
@@ -164,11 +186,11 @@ namespace VRStandardAssets.Utils
         }
 
 
-        private void HandleUp ()
+        private void HandleUp()
         {
             // If the coroutine has been started (and thus we have a reference to it) stop it.
-            if(m_FillBarRoutine != null && m_Slider != null)
-                StopCoroutine (m_FillBarRoutine);
+            if (m_FillBarRoutine != null && m_Slider != null)
+                StopCoroutine(m_FillBarRoutine);
 
             // Reset the timer and bar values.
             m_Timer = 0f;
@@ -176,7 +198,7 @@ namespace VRStandardAssets.Utils
         }
 
 
-        private void HandleOver ()
+        private void HandleOver()
         {
             // The user is now looking at the bar.
             m_GazeOver = true;
@@ -187,7 +209,7 @@ namespace VRStandardAssets.Utils
         }
 
 
-        private void HandleOut ()
+        private void HandleOut()
         {
             // The user is no longer looking at the bar.
             m_GazeOver = false;
