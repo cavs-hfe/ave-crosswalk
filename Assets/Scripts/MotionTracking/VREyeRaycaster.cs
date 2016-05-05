@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.VR;
 
 namespace VRStandardAssets.Utils
 {
@@ -12,16 +13,24 @@ namespace VRStandardAssets.Utils
         public event Action<RaycastHit> OnRaycasthit;                   // This event is called every frame that the user's gaze is over a collider.
 
 
-        [SerializeField] private Transform m_Camera;
-        [SerializeField] private LayerMask m_ExclusionLayers;           // Layers to exclude from the raycast.
-        [SerializeField] private Reticle m_Reticle;                     // The reticle, if applicable.
-        [SerializeField] private VRInput m_VrInput;                     // Used to call input based events on the current VRInteractiveItem.
-        [SerializeField] private bool m_ShowDebugRay;                   // Optionally show the debug ray.
-        [SerializeField] private float m_DebugRayLength = 5f;           // Debug ray length.
-        [SerializeField] private float m_DebugRayDuration = 1f;         // How long the Debug ray will remain visible.
-        [SerializeField] private float m_RayLength = 500f;              // How far into the scene the ray is cast.
+        [SerializeField]
+        private GameObject m_Camera;
+        [SerializeField]
+        private LayerMask m_ExclusionLayers;           // Layers to exclude from the raycast.
+        [SerializeField]
+        private Reticle m_Reticle;                     // The reticle, if applicable.
+        [SerializeField]
+        private VRInput m_VrInput;                     // Used to call input based events on the current VRInteractiveItem.
+        [SerializeField]
+        private bool m_ShowDebugRay;                   // Optionally show the debug ray.
+        [SerializeField]
+        private float m_DebugRayLength = 5f;           // Debug ray length.
+        [SerializeField]
+        private float m_DebugRayDuration = 1f;         // How long the Debug ray will remain visible.
+        [SerializeField]
+        private float m_RayLength = 500f;              // How far into the scene the ray is cast.
 
-        
+
         private VRInteractiveItem m_CurrentInteractible;                //The current interactive item
         private VRInteractiveItem m_LastInteractible;                   //The last interactive item
 
@@ -32,7 +41,7 @@ namespace VRStandardAssets.Utils
             get { return m_CurrentInteractible; }
         }
 
-        
+
         private void OnEnable()
         {
             m_VrInput.OnClick += HandleClick;
@@ -42,7 +51,7 @@ namespace VRStandardAssets.Utils
         }
 
 
-        private void OnDisable ()
+        private void OnDisable()
         {
             m_VrInput.OnClick -= HandleClick;
             m_VrInput.OnDoubleClick -= HandleDoubleClick;
@@ -56,19 +65,18 @@ namespace VRStandardAssets.Utils
             EyeRaycast();
         }
 
-      
+
         private void EyeRaycast()
         {
             // Show the debug ray if required
-            if (m_ShowDebugRay)
-            {
-                Debug.DrawRay(m_Camera.position, m_Camera.forward * m_DebugRayLength, Color.blue, m_DebugRayDuration);
-            }
+            Debug.DrawRay(m_Camera.transform.position, m_Camera.transform.forward * m_DebugRayLength, Color.blue, m_DebugRayDuration);
+
+            //Debug.Log("Camera position:" + m_Camera.transform.position.ToString());
 
             // Create a ray that points forwards from the camera.
-            Ray ray = new Ray(m_Camera.position, m_Camera.forward);
+            Ray ray = new Ray(m_Camera.transform.position, m_Camera.transform.forward);
             RaycastHit hit;
-            
+
             // Do the raycast forweards to see if we hit an interactive item
             if (Physics.Raycast(ray, out hit, m_RayLength, ~m_ExclusionLayers))
             {
@@ -77,7 +85,7 @@ namespace VRStandardAssets.Utils
 
                 // If we hit an interactive item and it's not the same as the last interactive item, then call Over
                 if (interactible && interactible != m_LastInteractible)
-                    interactible.Over(); 
+                    interactible.Over();
 
                 // Deactive the last interactive item 
                 if (interactible != m_LastInteractible)

@@ -8,7 +8,7 @@ using CAVS.IntersectionControl;
 using CAVS.Recording;
 using VRStandardAssets.Utils;
 using System;
-
+using System.IO;
 
 /// <summary>
 /// Conditions:
@@ -34,10 +34,25 @@ public class ExperimentController : MonoBehaviour
 
     private HeadsetType currentDevice;
 
+    private enum State
+    {
+        VRFamiliarization = 0,
+        PostVRFamilSSQ = 1,
+        TaskFamiliarization1 = 2,
+        TaskFamiliarization2 = 3,
+        TaskFamiliarization3 = 4,
+        PostTaskFamilSSQ = 5,
+        Lobby = 6,
+        Trial = 7
+    }
+
+    private State currentState;
+
     //needed by all
     private GameObject motionBase;
     private GUIArrows guiArrows;
     private VRCameraFade cameraFade;
+    private SteamVR_LaserPointer steamVRLaser;
 
     private bool readyToChangeScene = false;
 
@@ -87,10 +102,9 @@ public class ExperimentController : MonoBehaviour
 
     //needed by city
     private IntersectionController controller;
-    private Vector3 oculusMotionBaseStartPosition = new Vector3(77.32f, 1.3f, -48.28f);
-    private Vector3 openVRMotionBaseStartPosition = new Vector3(77.32f, 0f, -48.28f);
+    private Vector3 oculusMotionBaseStartPosition = new Vector3(65.31f, 1.3f, 56.13f);
+    private Vector3 openVRMotionBaseStartPosition = new Vector3(65.31f, 0f, 56.13f);
 
-    private bool isFirstTimeInCity = true;
     private GameObject exitTarget;
 
     private RecordingServiceBehavior recorder;
@@ -179,14 +193,105 @@ public class ExperimentController : MonoBehaviour
         DontDestroyOnLoad(motionBase);
         DontDestroyOnLoad(this.gameObject);
 
+        SceneManager.sceneLoaded += SceneManager_sceneLoaded;
+
         //save initial traffic change delay
         originalTrafficChangeDelay = trafficLightChangeDelay;
 
+        //setup current participant
+        if (!Directory.Exists("Subjects"))
+        {
+            Directory.CreateDirectory("Subjects");
+        }
+
+        String[] files = Directory.GetFiles("Subjects");
+
+        //if there are no files, the participant number is 0
+        if (files.Length == 0)
+        {
+            participantID = 0;
+
+            SetupConditions();
+        }
+        else
+        {
+            //else we need to check the last file and see if the experiment was completed
+            String[] lines = File.ReadAllLines("Subjects/CrosswalkParticipant" + (files.Length - 1) + ".txt");
+
+            //if we didn't finish the last experiement
+            if (!lines[lines.Length - 1].Equals("Experiment Complete"))
+            {
+                participantID = files.Length - 1;
+
+                //reload conditions from file
+                foreach (string s in lines)
+                {
+                    if (s.StartsWith("Conditions List:"))
+                    {
+                        string[] tokens = s.Substring(s.IndexOf(":") + 1).Split(',');
+                        conditions = new Queue<int>();
+                        foreach (string t in tokens)
+                        {
+                            conditions.Enqueue(int.Parse(t));
+                        }
+                        break;
+                    }
+                }
+                //fast forward to last completed trial
+                Array.Reverse(lines);
+                int lastCompleteRun = -1;
+                foreach (string s in lines)
+                {
+                    //if we find a complete run line, record the number
+                    if (s.Contains("complete") && s.Contains("Run"))
+                    {
+                        lastCompleteRun = int.Parse(s.Substring(s.IndexOf("Run") + 3, s.IndexOf("complete") - s.IndexOf("Run") - 3).Trim());
+                        break;
+                    }
+                }
+                if (lastCompleteRun != -1)
+                {
+                    for (int i = 0; i <= lastCompleteRun; i++)
+                    {
+                        conditions.Dequeue();
+                    }
+                    runNumber = lastCompleteRun + 1;
+                    //load lobby to pick up where we left off
+                    currentState = State.Lobby;
+                    SceneManager.LoadScene(1);
+                    return;
+                }
+                else
+                {
+                    //we need to start over as we didn't make it through fam
+
+                }
+
+            }
+            else
+            {
+                participantID = files.Length;
+
+                SetupConditions();
+            }
+        }
+
+        //UnityEngine.VR.VRSettings.showDeviceView = false;
+
+        //load familiarization
+        currentState = State.TaskFamiliarization1;
+        SceneManager.LoadScene(2);
+    }
+
+    void SetupConditions()
+    {
         //setup conditions
         int[] conditionOrder = conditionMatrix[participantID % 6];
 
         List<int> blockList;
         conditions = new Queue<int>();
+
+        string conditionsString = "";
 
         for (int i = 0; i < conditionOrder.Length; i++)
         {
@@ -203,28 +308,36 @@ public class ExperimentController : MonoBehaviour
             blockList.Add(2);
             blockList = Shuffle(blockList);
 
-            string message = "Shuffled block " + i + ", adding to queue:";
+            //string message = "Shuffled block " + i + ", adding to queue:";
 
             foreach (int j in blockList)
             {
                 conditions.Enqueue(j);
-                message += j + " ";
+                conditionsString += j + ",";
             }
 
-            Debug.Log(message);
+            //Debug.Log(message);
         }
 
-        Debug.Log("Final condition queue:" + conditions.ToString());
+        //Debug.Log("Final condition queue:" + conditions.ToString());
 
-        //UnityEngine.VR.VRSettings.showDeviceView = false;
-
-        //load familiarization
-        SceneManager.LoadScene(2);
+        //write header
+        using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+        {
+            file.WriteLine("Crosswalk Study");
+            file.WriteLine("Date: " + DateTime.Now.ToShortDateString());
+            file.WriteLine("Time: " + DateTime.Now.ToShortTimeString());
+            file.WriteLine("Subject ID: " + participantID);
+            file.WriteLine();
+            file.WriteLine("Conditions List: " + conditionsString.Substring(0, conditionsString.Length - 1));
+            file.WriteLine();
+            file.WriteLine("Experiment Begin");
+        }
     }
 
-    void OnLevelWasLoaded(int level)
+    void SceneManager_sceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        switch (level)
+        switch (scene.buildIndex)
         {
             case 0: //Start
                 Debug.Log("Scene Loaded: StartScene");
@@ -243,6 +356,9 @@ public class ExperimentController : MonoBehaviour
                     {
                         motionBase.transform.position = new Vector3(0.0f, 0f, 0.0f);
                     }
+
+                    motionBase.transform.rotation = Quaternion.Euler(0, 0, 0);
+
                 }
 
                 //find lobby game objects and register callbacks
@@ -279,19 +395,35 @@ public class ExperimentController : MonoBehaviour
                     targetTwoFadedOut = true;
                 }
 
-                //if it is time to ask the user for a SSQ, show the SSQ instructions
-                if (runNumber > 0 && runNumber % numberOfRunsBeforeSSQ == 0)
+                if (currentState == State.Lobby && conditions.Count == 0)
+                {
+                    using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                    {
+                        file.WriteLine("Experiment Complete");
+                    }
+                    finishedInstructions.SetActive(true);
+                    onBreak = true;
+                }
+                else if (currentState == State.PostVRFamilSSQ || currentState == State.PostTaskFamilSSQ || (currentState == State.Lobby && runNumber % numberOfRunsBeforeSSQ == 0))
                 {
                     ssqInstructions.SetActive(true);
                     onBreak = true;
                 }
-                else if (runNumber > 0 && runNumber % numberOfRunsBeforeBreak == 0) //else if time for break, show break instructions
+                else if (currentState == State.Lobby && runNumber % numberOfRunsBeforeBreak == 0) //else if time for break, show break instructions
                 {
                     breakInstructions.SetActive(true);
                     onBreak = true;
                 }
 
-                cameraFade.FadeIn(false);
+                if (currentDevice == HeadsetType.Oculus)
+                {
+                    cameraFade.FadeIn(false);
+                }
+                else if (currentDevice == HeadsetType.OpenVR)
+                {
+                    //SteamVR_Fade.Start(Color.black, 0);
+                    //SteamVR_Fade.Start(Color.clear, fadeInDelay);
+                }
                 break;
             case 2: //City
                 Debug.Log("Scene Loaded: City");
@@ -307,9 +439,13 @@ public class ExperimentController : MonoBehaviour
                         motionBase.transform.position = openVRMotionBaseStartPosition;
                     }
 
-                    if (runNumber > 0)
+                    if (currentState == State.TaskFamiliarization1 || currentState == State.TaskFamiliarization3 || (currentState == State.Trial && runNumber % 2 == 1))
                     {
-                        motionBase.transform.Rotate(Vector3.up, 180f);
+                        motionBase.transform.rotation = Quaternion.Euler(0, 0, 0);
+                    }
+                    else
+                    {
+                        motionBase.transform.rotation = Quaternion.Euler(0, 180, 0);
                     }
                 }
 
@@ -326,8 +462,12 @@ public class ExperimentController : MonoBehaviour
                 exitTarget.SetActive(false);
 
                 //if this is the first time in the city, run the task familiarization routine
-                if (isFirstTimeInCity)
+                if (currentState == State.TaskFamiliarization1)
                 {
+                    using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                    {
+                        file.WriteLine(DateTime.Now.ToLongTimeString() + " Start Task Familiarization 1");
+                    }
                     //disable traffic
                     targetVehicle.SetActive(false);
                     GameObject[] traffic = GameObject.FindGameObjectsWithTag("Traffic");
@@ -342,10 +482,36 @@ public class ExperimentController : MonoBehaviour
                     //countdown until exit target appears
                     timer = 15f;
                 }
+                else if (currentState == State.TaskFamiliarization2 || currentState == State.TaskFamiliarization3)
+                {
+                    if (currentState == State.TaskFamiliarization2)
+                    {
+                        using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                        {
+                            file.WriteLine(DateTime.Now.ToLongTimeString() + " Start Task Familiarization 2");
+                        }
+                    }
+                    else
+                    {
+                        using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                        {
+                            file.WriteLine(DateTime.Now.ToLongTimeString() + " Start Task Familiarization 3");
+                        }
+                    }
+                    //disable target car
+                    targetVehicle.SetActive(false);
+
+                    //set traffic light change
+                    controller.toggle(10);
+                }
                 else
                 {
-
                     condition = conditions.Dequeue();
+
+                    using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                    {
+                        file.WriteLine(DateTime.Now.ToLongTimeString() + " Start Run: " + runNumber + " Condition: " + condition);
+                    }
 
                     if (recorder != null && !recorder.currentelyRecording())
                     {
@@ -395,10 +561,10 @@ public class ExperimentController : MonoBehaviour
                         if (condition % 2 == 0)
                         {
                             targetVehicle.transform.Rotate(Vector3.up, 180);
-                            targetVehicle.transform.position = new Vector3(targetVehicle.transform.position.x, 0, -49.8f);
+                            targetVehicle.transform.position = new Vector3(64.0f, 0, targetVehicle.transform.position.z);
                         }
 
-                        Vector3 trialCarPosition = new Vector3(targetVehicle.transform.position.x + trialCarOffset, 0, targetVehicle.transform.position.z);
+                        Vector3 trialCarPosition = new Vector3(targetVehicle.transform.position.x, 0, targetVehicle.transform.position.z + trialCarOffset);
 
                         targetVehicle.transform.position = trialCarPosition;
 
@@ -406,10 +572,18 @@ public class ExperimentController : MonoBehaviour
                         recorder.logEventToRecording("new trial car position", "new trial car position: " + trialCarPosition.ToString());
                     }
                 }
-                cameraFade.FadeIn(false);
+                if (currentDevice == HeadsetType.Oculus)
+                {
+                    cameraFade.FadeIn(false);
+                }
+                else if (currentDevice == HeadsetType.OpenVR)
+                {
+                    //SteamVR_Fade.Start(Color.black, 0);
+                    //SteamVR_Fade.Start(Color.clear, fadeInDelay);
+                }
                 break;
             default:
-                Debug.Log("Scene Loaded: " + level);
+                Debug.Log("Scene Loaded: " + scene.name);
                 break;
         }
     }
@@ -422,34 +596,20 @@ public class ExperimentController : MonoBehaviour
             case 0: //Start
                 break;
             case 1: //Lobby
-                if (targetOneFadedOut && targetTwoFadedOut && conditions.Count > 0)
+                if (targetOneFadedOut && targetTwoFadedOut /*&& conditions.Count > 0*/)
                 {
-                    if (runNumber > 1 && !onBreak)
+                    if (currentState == State.Lobby && !onBreak && runNumber % 2 == 0)
+                    {
+                        targetTwo.SetActive(true);
+                        targetTwoImage.CrossFadeAlpha(1.0f, 1.0f, true);
+                        targetTwoFadedOut = false;
+                        lobbyInstructions.transform.rotation = Quaternion.Euler(0, 270, 0);
+                    }
+                    else if (currentState == State.Lobby && !onBreak && runNumber % 2 == 1)
                     {
                         targetOne.SetActive(true);
                         targetOneImage.CrossFadeAlpha(1.0f, 1.0f, true);
                         targetOneFadedOut = false;
-                        //guiArrows.SetDesiredDirection(targetTwo.transform); //set initial direction to target two to get user to look at target one
-                        //guiArrows.Show();
-                    }
-                    else if (!onBreak)
-                    {
-                        if (runNumber % 2 == 0)
-                        {
-                            targetTwo.SetActive(true);
-                            targetTwoImage.CrossFadeAlpha(1.0f, 1.0f, true);
-                            targetTwoFadedOut = false;
-                            //guiArrows.SetDesiredDirection(targetOne.transform); //set initial direction to target one to get user to look at target one
-                            //guiArrows.Show();
-                        }
-                        else
-                        {
-                            targetOne.SetActive(true);
-                            targetOneImage.CrossFadeAlpha(1.0f, 1.0f, true);
-                            targetOneFadedOut = false;
-                            //guiArrows.SetDesiredDirection(targetTwo.transform); //set initial direction to target two to get user to look at target one
-                            //guiArrows.Show();
-                        }
                     }
                 }
                 else if (conditions.Count == 0)
@@ -458,7 +618,7 @@ public class ExperimentController : MonoBehaviour
                 }
                 break;
             case 2: //City
-                if (isFirstTimeInCity)
+                if (currentState == State.TaskFamiliarization1)
                 {
                     if (timer > 0)
                     {
@@ -502,37 +662,64 @@ public class ExperimentController : MonoBehaviour
                 //if we're at trigger one, point GUI arrows forward relative to trigger one
                 if (tag.Equals("TargetOne") && !lobbyInstructions.activeSelf)
                 {
-                    //guiArrows.SetDesiredDirection(targetOne.transform);
-                    lobbyInstructions.transform.Rotate(Vector3.up, 180);
                     lobbyInstructions.SetActive(true);
                 }
                 else if (tag.Equals("TargetTwo")) //else if we're at trigger two, point GUI arrows forward relative to trigger two
                 {
-                    //guiArrows.SetDesiredDirection(targetTwo.transform);
                     lobbyInstructions.SetActive(true);
                 }
                 break;
             case 2: //city
                 if (tag.Equals("Finish"))
                 {
-                    if (!isFirstTimeInCity)
+                    if (currentState == State.Trial)
                     {
                         //stop recording
                         if (recorder != null && recorder.currentelyRecording())
                         {
                             recorder.stopAndSaveRecording(new[] { RecordingFileFormat.XML, RecordingFileFormat.CSV });
                         }
-
-                        //return to lobby
+                        using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                        {
+                            file.WriteLine(DateTime.Now.ToLongTimeString() + " Run " + runNumber + " complete");
+                        }
                         runNumber++;
                     }
-
-                    if (cameraFade != null)
+                    else
+                    {
+                        if (currentState == State.TaskFamiliarization1)
+                        {
+                            using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                            {
+                                file.WriteLine(DateTime.Now.ToLongTimeString() + " Task Familiarization 1 complete");
+                            }
+                        }
+                        else if (currentState == State.TaskFamiliarization2)
+                        {
+                            using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                            {
+                                file.WriteLine(DateTime.Now.ToLongTimeString() + " Task Familiarization 2 complete");
+                            }
+                        }
+                        else if (currentState == State.TaskFamiliarization3)
+                        {
+                            using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                            {
+                                file.WriteLine(DateTime.Now.ToLongTimeString() + " Task Familiarization 3 complete");
+                            }
+                        }
+                    }
+                    if (currentDevice == HeadsetType.Oculus && cameraFade != null)
                     {
                         cameraFade.FadeOut(false);
                         readyToChangeScene = true;
                     }
-
+                    else if (currentDevice == HeadsetType.OpenVR)
+                    {
+                        SteamVR_Fade.Start(Color.black, fadeInDelay);
+                        readyToChangeScene = true;
+                        cameraFade_OnFadeComplete();
+                    }
                 }
                 break;
             default:
@@ -542,18 +729,38 @@ public class ExperimentController : MonoBehaviour
 
     void cameraFade_OnFadeComplete()
     {
-        Debug.Log("fade complete");
         if (readyToChangeScene)
         {
             switch (SceneManager.GetActiveScene().buildIndex)
             {
                 case 1:
-                    SceneManager.LoadScene(2);
+                    if (currentState == State.PostVRFamilSSQ)
+                    {
+                        currentState = State.TaskFamiliarization1;
+                        SceneManager.LoadScene(2);
+                    }
+                    else if (currentState == State.Lobby)
+                    {
+                        currentState = State.Trial;
+                        SceneManager.LoadScene(2);
+                    }
                     break;
                 case 2:
-                    Debug.Log("Faded out of city, load lobby");
-                    isFirstTimeInCity = false;
-                    SceneManager.LoadScene(1);
+                    if (currentState == State.TaskFamiliarization1)
+                    {
+                        currentState = State.TaskFamiliarization2;
+                        SceneManager.LoadScene(2);
+                    }
+                    else if (currentState == State.TaskFamiliarization2)
+                    {
+                        currentState = State.TaskFamiliarization3;
+                        SceneManager.LoadScene(2);
+                    }
+                    else if (currentState == State.TaskFamiliarization3 || currentState == State.Trial)
+                    {
+                        currentState = State.Lobby;
+                        SceneManager.LoadScene(1);
+                    }
                     break;
                 default:
                     break;
@@ -566,13 +773,25 @@ public class ExperimentController : MonoBehaviour
     {
         if (onBreak)
         {
+            if (currentState == State.PostTaskFamilSSQ)
+            {
+                currentState = State.Lobby;
+            }
             breakInstructions.SetActive(false);
             ssqInstructions.SetActive(false);
             onBreak = false;
         }
         else
         {
-            cameraFade.FadeOut(false);
+            if (currentDevice == HeadsetType.Oculus)
+            {
+                cameraFade.FadeIn(false);
+            }
+            else if (currentDevice == HeadsetType.OpenVR)
+            {
+                SteamVR_Fade.Start(Color.black, fadeInDelay);
+                cameraFade_OnFadeComplete();
+            }
             readyToChangeScene = true;
         }
 

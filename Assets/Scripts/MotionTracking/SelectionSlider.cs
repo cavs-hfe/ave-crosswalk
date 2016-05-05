@@ -53,11 +53,11 @@ namespace VRStandardAssets.Utils
 
         private void OnEnable()
         {
-            if (GameObject.FindGameObjectWithTag("OculusPlayer").activeInHierarchy)
+            if (GameObject.FindGameObjectWithTag("OculusPlayer"))
             {
                 m_VRInput = GameObject.FindGameObjectWithTag("OculusPlayer").GetComponentInChildren<VRInput>();
             }
-            else if (GameObject.FindGameObjectWithTag("OpenVRPlayer").activeInHierarchy)
+            else if (GameObject.FindGameObjectWithTag("OpenVRPlayer"))
             {
                 m_VRInput = GameObject.FindGameObjectWithTag("OpenVRPlayer").GetComponentInChildren<VRInput>();
             }

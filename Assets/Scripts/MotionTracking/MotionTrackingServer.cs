@@ -84,28 +84,35 @@ public class MotionTrackingServer : MonoBehaviour
         Socket listeningSocket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
         IPEndPoint localEndPoint = new IPEndPoint(address, port);
 
-        //bind
-        //Debug.Log ("binding");
-        listeningSocket.Bind(localEndPoint);
-
-        //listen
-        //Debug.Log ("listening");
-        listeningSocket.Listen(5);
-
-        //accept
-        //Debug.Log ("accepting");
-        listeningSocket.BeginAccept(new AsyncCallback(AcceptCallback), listeningSocket);
-
-        if (usingMocap)
+        try
         {
-            //kinect.SetActive(false);
+            //bind
+            //Debug.Log ("binding");
+            listeningSocket.Bind(localEndPoint);
 
-            System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-            startInfo.Arguments = mocapIpAddress + " " + ipAddress;
-            startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Minimized;
-            startInfo.FileName = "C:\\rsween\\dev\\ped-sim-mocap\\Release\\EVaRTSDKExample.exe";
+            //listen
+            //Debug.Log ("listening");
+            listeningSocket.Listen(5);
 
-            mocapProcess = System.Diagnostics.Process.Start(startInfo);
+            //accept
+            //Debug.Log ("accepting");
+            listeningSocket.BeginAccept(new AsyncCallback(AcceptCallback), listeningSocket);
+
+            if (usingMocap)
+            {
+                //kinect.SetActive(false);
+
+                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+                startInfo.Arguments = mocapIpAddress + " " + ipAddress;
+                startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Minimized;
+                startInfo.FileName = "C:\\rsween\\dev\\ped-sim-mocap\\Release\\EVaRTSDKExample.exe";
+
+                mocapProcess = System.Diagnostics.Process.Start(startInfo);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.Log("Error setting up server: " + ex.Message);
         }
     }
 
