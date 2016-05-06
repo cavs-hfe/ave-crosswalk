@@ -105,6 +105,9 @@ public class ExperimentController : MonoBehaviour
     private Vector3 oculusMotionBaseStartPosition = new Vector3(65.31f, 1.3f, 56.13f);
     private Vector3 openVRMotionBaseStartPosition = new Vector3(65.31f, 0f, 56.13f);
 
+    private StreetlightInteractiveItem targetTrafficLight;
+    public float taskFamiliarization1Time;
+
     private GameObject exitTarget;
 
     private RecordingServiceBehavior recorder;
@@ -461,6 +464,8 @@ public class ExperimentController : MonoBehaviour
                 exitTarget = GameObject.FindGameObjectWithTag("TargetOne");
                 exitTarget.SetActive(false);
 
+                targetTrafficLight = GameObject.FindGameObjectWithTag("TrafficLight").GetComponentInChildren<StreetlightInteractiveItem>();
+
                 //if this is the first time in the city, run the task familiarization routine
                 if (currentState == State.TaskFamiliarization1)
                 {
@@ -477,10 +482,10 @@ public class ExperimentController : MonoBehaviour
                     }
 
                     //set traffic light change
-                    controller.toggle(10);
+                    controller.toggle(35);
 
                     //countdown until exit target appears
-                    timer = 15f;
+                    timer = taskFamiliarization1Time;
                 }
                 else if (currentState == State.TaskFamiliarization2 || currentState == State.TaskFamiliarization3)
                 {
@@ -620,7 +625,17 @@ public class ExperimentController : MonoBehaviour
             case 2: //City
                 if (currentState == State.TaskFamiliarization1)
                 {
-                    if (timer > 0)
+                    if (timer > taskFamiliarization1Time - 13 && timer < taskFamiliarization1Time - 12)
+                    {
+                        targetTrafficLight.highlightPole(true);
+                        timer = timer - Time.deltaTime;
+                    }
+                    else if (timer > taskFamiliarization1Time - 20 && timer < taskFamiliarization1Time - 17)
+                    {
+                        targetTrafficLight.unlockState();
+                        timer = timer - Time.deltaTime;
+                    }
+                    else if (timer > 0)
                     {
                         timer = timer - Time.deltaTime;
                     }
