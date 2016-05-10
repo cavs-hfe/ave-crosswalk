@@ -731,9 +731,21 @@ public class ExperimentController : MonoBehaviour
                     }
                     else if (currentDevice == HeadsetType.OpenVR)
                     {
-                        SteamVR_Fade.Start(Color.black, fadeInDelay);
-                        readyToChangeScene = true;
-                        cameraFade_OnFadeComplete();
+                        if (currentState == State.TaskFamiliarization1)
+                        {
+                            currentState = State.TaskFamiliarization2;
+                            SteamVR_LoadLevel.Begin("City", false, 0.5f, 0f, 0f, 0f, 0f);
+                        }
+                        else if (currentState == State.TaskFamiliarization2)
+                        {
+                            currentState = State.TaskFamiliarization3;
+                            SteamVR_LoadLevel.Begin("City", false, 0.5f, 0f, 0f, 0f, 0f);
+                        }
+                        else if (currentState == State.TaskFamiliarization3 || currentState == State.Trial)
+                        {
+                            currentState = State.Lobby;
+                            SteamVR_LoadLevel.Begin("Lobby", false, 0.5f, 0f, 0f, 0f, 0f);
+                        }
                     }
                 }
                 break;
