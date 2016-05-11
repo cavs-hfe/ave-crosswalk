@@ -58,7 +58,6 @@ namespace VRStandardAssets.Utils
             m_IsSelectionRadialActive = true;
         }
 
-
         public void Hide()
         {
             m_Selection.gameObject.SetActive(false);
@@ -68,6 +67,15 @@ namespace VRStandardAssets.Utils
             m_Selection.fillAmount = 0f;            
         }
 
+        public void StartFill()
+        {
+            HandleDown();
+        }
+
+        public void StopFill()
+        {
+            HandleUp();
+        }
 
         private IEnumerator FillSelectionRadial()
         {

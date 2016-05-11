@@ -282,8 +282,8 @@ public class ExperimentController : MonoBehaviour
         //UnityEngine.VR.VRSettings.showDeviceView = false;
 
         //load familiarization
-        currentState = State.TaskFamiliarization1;
-        SceneManager.LoadScene(2);
+        currentState = State.VRFamiliarization;
+        SceneManager.LoadScene(3);
     }
 
     void SetupConditions()
@@ -587,6 +587,25 @@ public class ExperimentController : MonoBehaviour
                     //SteamVR_Fade.Start(Color.clear, fadeInDelay);
                 }
                 break;
+            case 3: //VR Familiarization
+
+                if (currentDevice == HeadsetType.Oculus)
+                {
+                    motionBase.transform.position = new Vector3(2.2f, 1.3f, 4.5f);
+                }
+                else if (currentDevice == HeadsetType.OpenVR)
+                {
+                    motionBase.transform.position = new Vector3(2.2f, 0f, 4.5f);
+                }
+
+                GameObject[] objectives = GameObject.FindGameObjectsWithTag("Objective");
+                foreach (GameObject go in objectives)
+                {
+                    go.GetComponent<Interactable>().reticleSelector = motionBase.GetComponentInChildren<SelectionRadial>();
+                }
+
+
+                break;
             default:
                 Debug.Log("Scene Loaded: " + scene.name);
                 break;
@@ -610,7 +629,7 @@ public class ExperimentController : MonoBehaviour
                         targetTwoFadedOut = false;
                         lobbyInstructions.transform.rotation = Quaternion.Euler(0, 270, 0);
                     }
-                    else if (currentState == State.Lobby && !onBreak && runNumber % 2 == 1)
+                    else if ((currentState == State.PostVRFamilSSQ && !onBreak) || (currentState == State.Lobby && !onBreak && runNumber % 2 == 1))
                     {
                         targetOne.SetActive(true);
                         targetOneImage.CrossFadeAlpha(1.0f, 1.0f, true);
@@ -749,6 +768,21 @@ public class ExperimentController : MonoBehaviour
                     }
                 }
                 break;
+            case 3: //fam room
+                if (tag.Equals("TargetOne"))
+                {
+                    if (currentDevice == HeadsetType.Oculus)
+                    {
+                        cameraFade.FadeOut(false);
+                        readyToChangeScene = true;
+                    }
+                    else if (currentDevice == HeadsetType.OpenVR)
+                    {
+                        currentState = State.PostVRFamilSSQ;
+                        SteamVR_LoadLevel.Begin("Lobby", false, 0.5f, 0, 0, 0, 0);
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -789,6 +823,10 @@ public class ExperimentController : MonoBehaviour
                         SceneManager.LoadScene(1);
                     }
                     break;
+                case 3:
+                    currentState = State.PostVRFamilSSQ;
+                    SceneManager.LoadScene(1);
+                    break;
                 default:
                     break;
             }
@@ -821,7 +859,6 @@ public class ExperimentController : MonoBehaviour
             }
             readyToChangeScene = true;
         }
-
     }
 
     private float calculateTrialCarOffset(float goSignalDelay)
