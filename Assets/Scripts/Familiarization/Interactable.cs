@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using VRStandardAssets.Utils;
 
@@ -9,11 +10,14 @@ public class Interactable : MonoBehaviour
 
     public SelectionRadial reticleSelector;
 
+    public Text text;
+
     [Tooltip("Determines if the object is interactable on start.")]
     public bool active_on_start = true;
 
+    [SerializeField]
     [Tooltip("Determines if the object is interactable.")]
-    public bool interactable = true;
+    private bool interactable = true;
 
     [Tooltip("Determines how much time is required to complete its task.")]
     public float time_to_complete = 3;
@@ -48,10 +52,12 @@ public class Interactable : MonoBehaviour
         if (!active_on_start) { interactable = false; }
         if (reset_on_complete) { hide_on_complete = false; }
 
-        vrInteractiveItem.OnOver += interactive_OnOver;
-        vrInteractiveItem.OnOut += interactive_OnOut;
-
-        reticleSelector.OnSelectionComplete += reticleSelector_OnSelectionComplete;
+        if (vrInteractiveItem)
+        {
+            vrInteractiveItem.OnOver += interactive_OnOver;
+            vrInteractiveItem.OnOut += interactive_OnOut;
+        }
+        
     }
 
     void reticleSelector_OnSelectionComplete()
@@ -61,7 +67,7 @@ public class Interactable : MonoBehaviour
             activated = true;
             if (activate_interactable)
             {
-                activate_interactable.interactable = true;
+                activate_interactable.setInteractable();
             }
             if (hide_on_complete)
             {
@@ -92,49 +98,15 @@ public class Interactable : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    public void setInteractable()
     {
-        /*if (!activated && cursorOver && value < 100)
-        {
-            value += 1 / time_to_complete * 100 * Time.deltaTime;
-            if (value >= 100)
-            {
-                value = 100;
-                activated = true;
-                reticleSelector.StopFill();
-                reticleSelector.Hide(); 
-                if (activate_interactable)
-                {
-                    activate_interactable.interactable = true;
-                }
-                if (reset_on_complete)
-                {
-                    value = 0;
-                    if (decrement_time) { time_temp = 0; }
-                    activated = !activated;
-                }
-                if (hide_on_complete)
-                {
-                    value = 0;
-                    interactable = false;
-                    if (decrement_time) { time_temp = 0; }
-                    //gameObject.SetActive(false);
-                }
-            }
-        } else if (!cursorOver && decrement_time && value < 100)
-        {
-            if (value > time_temp)
-            {
-                time_temp = value;
-            }
-            else if (value <= time_temp && value > 0)
-            {
-                value -= 1 / time_to_complete * 100 * Time.deltaTime;
-                if (value < 0) { value = 0; }
-                time_temp = value;
-            }
-        }*/
+        interactable = true;
+        text.text = gui_display;
+    }
+
+    public bool isInteractable()
+    {
+        return interactable;
     }
 
     public bool isActivated()
@@ -142,17 +114,4 @@ public class Interactable : MonoBehaviour
         return activated;
     }
 
-    /*void OnGUI()
-    {
-
-        int width = 300;
-        int height = 200;
-        if (Camera.current.transform.eulerAngles.x >= 60 && Camera.current.transform.eulerAngles.x <= 90)
-        {
-            Debug.Log(Camera.current.transform.parent.name);
-            GUI.skin.label.alignment = TextAnchor.MiddleCenter;
-            GUI.skin.label.fontSize = 24;
-            GUI.Label(new Rect(Screen.width / 2 - (width / 2), Screen.height / 2 - (height / 2), width, height), gui_display);
-        }
-    }*/
 }

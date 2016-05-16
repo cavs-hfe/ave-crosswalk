@@ -51,7 +51,7 @@ public class Visual_Casting : MonoBehaviour {
 
 
 			// Detect if the game object has the "Interactable" Script
-			if (hit.collider.gameObject.GetComponent<Interactable>() && hit.collider.gameObject.GetComponent<Interactable>().interactable)
+			if (hit.collider.gameObject.GetComponent<Interactable>() && hit.collider.gameObject.GetComponent<Interactable>().isInteractable())
 			{
 				// Increase its Timer
 				hit.collider.gameObject.GetComponent<Interactable>().value += 1 / hit.collider.gameObject.GetComponent<Interactable>().time_to_complete  * 100 * Time.deltaTime;

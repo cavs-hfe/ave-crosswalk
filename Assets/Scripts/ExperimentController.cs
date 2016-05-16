@@ -482,7 +482,7 @@ public class ExperimentController : MonoBehaviour
                     }
 
                     //set traffic light change
-                    controller.toggle(35);
+                    controller.toggle(20);
 
                     //countdown until exit target appears
                     timer = taskFamiliarization1Time;
@@ -591,12 +591,14 @@ public class ExperimentController : MonoBehaviour
 
                 if (currentDevice == HeadsetType.Oculus)
                 {
-                    motionBase.transform.position = new Vector3(2.2f, 1.3f, 4.5f);
+                    motionBase.transform.position = new Vector3(2.2f, 1.3f, 5.5f);
                 }
                 else if (currentDevice == HeadsetType.OpenVR)
                 {
-                    motionBase.transform.position = new Vector3(2.2f, 0f, 4.5f);
+                    motionBase.transform.position = new Vector3(2.2f, 0f, 5.5f);
                 }
+
+                motionBase.transform.rotation = Quaternion.Euler(0, 0, 0);
 
                 GameObject[] objectives = GameObject.FindGameObjectsWithTag("Objective");
                 foreach (GameObject go in objectives)
@@ -644,12 +646,12 @@ public class ExperimentController : MonoBehaviour
             case 2: //City
                 if (currentState == State.TaskFamiliarization1)
                 {
-                    if (timer > taskFamiliarization1Time - 13 && timer < taskFamiliarization1Time - 12)
+                    if (timer > taskFamiliarization1Time - 6 && timer < taskFamiliarization1Time - 5)
                     {
                         targetTrafficLight.highlightPole(true);
                         timer = timer - Time.deltaTime;
                     }
-                    else if (timer > taskFamiliarization1Time - 20 && timer < taskFamiliarization1Time - 17)
+                    else if (timer > taskFamiliarization1Time - 9 && timer < taskFamiliarization1Time - 8)
                     {
                         targetTrafficLight.unlockState();
                         timer = timer - Time.deltaTime;
