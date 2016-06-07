@@ -60,6 +60,8 @@ public class ExperimentController : MonoBehaviour
     public int runNumber = 0;
     public int condition = 0;
 
+    public bool debugConditions = false;
+
     public int[][] conditionMatrix = new int[][] 
     { 
         new int[] { 3, 4, 5, 6, 7, 8 },
@@ -70,8 +72,8 @@ public class ExperimentController : MonoBehaviour
         new int[] { 8, 3, 7, 5, 6, 4 }
     };
 
-    //public Queue<int> conditions = new Queue<int>(new[] { 0, 3, 4, 5, 6, 7, 8 });
-    public Queue<int> conditions;
+    public Queue<int> conditions = new Queue<int>(new[] { 8, 8, 8, 8 });
+    //public Queue<int> conditions;
 
     //needed by lobby
     private GameObject targetOne;
@@ -139,6 +141,13 @@ public class ExperimentController : MonoBehaviour
     public float walkInterval;
     [Tooltip("Distance from origin of target to front bumper, in m")]
     public float vehicleOffset;
+
+    public float trial3Offset;
+    public float trial4Offset;
+    public float trial5Offset;
+    public float trial6Offset;
+    public float trial7Offset;
+    public float trial8Offset;
 
     private float originalTrafficChangeDelay;
 
@@ -214,7 +223,10 @@ public class ExperimentController : MonoBehaviour
         {
             participantID = 0;
 
-            SetupConditions();
+            if (!debugConditions)
+            {
+                SetupConditions();
+            }
         }
         else
         {
@@ -274,16 +286,27 @@ public class ExperimentController : MonoBehaviour
             else
             {
                 participantID = files.Length;
-
-                SetupConditions();
+                if (!debugConditions)
+                {
+                    SetupConditions();
+                }
             }
         }
 
         //UnityEngine.VR.VRSettings.showDeviceView = false;
 
         //load familiarization
-        currentState = State.VRFamiliarization;
-        SceneManager.LoadScene(3);
+        if (debugConditions)
+        {
+            currentState = State.Trial;
+            SceneManager.LoadScene(2);
+        }
+        else
+        {
+            currentState = State.VRFamiliarization;
+            SceneManager.LoadScene(3);
+        }
+
     }
 
     void SetupConditions()
@@ -569,7 +592,7 @@ public class ExperimentController : MonoBehaviour
                             targetVehicle.transform.position = new Vector3(64.0f, 0, targetVehicle.transform.position.z);
                         }
 
-                        Vector3 trialCarPosition = new Vector3(targetVehicle.transform.position.x, 0, targetVehicle.transform.position.z + trialCarOffset);
+                        Vector3 trialCarPosition = new Vector3(targetVehicle.transform.position.x, 0, targetVehicle.transform.position.z - trialCarOffset);
 
                         targetVehicle.transform.position = trialCarPosition;
 
@@ -596,6 +619,11 @@ public class ExperimentController : MonoBehaviour
                 else if (currentDevice == HeadsetType.OpenVR)
                 {
                     motionBase.transform.position = new Vector3(2.2f, 0f, 5.5f);
+                }
+
+                using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                {
+                    file.WriteLine(DateTime.Now.ToLongTimeString() + " Start VR Familiarization");
                 }
 
                 motionBase.transform.rotation = Quaternion.Euler(0, 0, 0);
@@ -773,6 +801,11 @@ public class ExperimentController : MonoBehaviour
             case 3: //fam room
                 if (tag.Equals("TargetOne"))
                 {
+                    using (System.IO.StreamWriter file = new System.IO.StreamWriter("Subjects/CrosswalkParticipant" + participantID + ".txt", true))
+                    {
+                        file.WriteLine(DateTime.Now.ToLongTimeString() + " VR Familiarization Complete");
+                    }
+
                     if (currentDevice == HeadsetType.Oculus)
                     {
                         cameraFade.FadeOut(false);
@@ -879,22 +912,26 @@ public class ExperimentController : MonoBehaviour
                 break;
             case 3:         //near miss front far
                 //trialCarOffset = (goSignalDelay + (startPositionOffset + (streetWidth / 2)) / walkingSpeed) * vehicleSpeed;
-                trialCarOffset = goSignalDelay * vehicleSpeed;
+                trialCarOffset = ((goSignalDelay * vehicleSpeed) - trial3Offset);
                 break;
             case 4:         //near miss front near
-                trialCarOffset = -goSignalDelay * vehicleSpeed;
+                trialCarOffset = -((goSignalDelay * vehicleSpeed) - trial4Offset);
                 break;
             case 5:         //near miss back far
-                trialCarOffset = (goSignalDelay + (startPositionOffset + streetWidth / 2) / walkingSpeed) * vehicleSpeed;
+                //trialCarOffset = (goSignalDelay + (startPositionOffset + streetWidth / 2) / walkingSpeed) * vehicleSpeed;
+                trialCarOffset = ((goSignalDelay * vehicleSpeed) - trial5Offset);
                 break;
             case 6:         //near miss back near
-                trialCarOffset = -(goSignalDelay + (startPositionOffset + streetWidth) / walkingSpeed) * vehicleSpeed;
+                //trialCarOffset = -(goSignalDelay + (startPositionOffset + streetWidth) / walkingSpeed) * vehicleSpeed;
+                trialCarOffset = -((goSignalDelay * vehicleSpeed) - trial6Offset);
                 break;
             case 7:         //hit far
-                trialCarOffset = (goSignalDelay + (startPositionOffset + 0.75f * streetWidth) / walkingSpeed) * vehicleSpeed;
+                //trialCarOffset = (goSignalDelay + (startPositionOffset + 0.75f * streetWidth) / walkingSpeed) * vehicleSpeed;
+                trialCarOffset = ((goSignalDelay * vehicleSpeed) - trial7Offset);
                 break;
             case 8:         //hit near
-                trialCarOffset = -(goSignalDelay + (startPositionOffset + streetWidth / 4) / walkingSpeed) * vehicleSpeed;
+                //trialCarOffset = -(goSignalDelay + (startPositionOffset + streetWidth / 4) / walkingSpeed) * vehicleSpeed;
+                trialCarOffset = -((goSignalDelay * vehicleSpeed) - trial8Offset);
                 break;
         }
         return trialCarOffset;
