@@ -16,6 +16,8 @@ namespace CAVS.Recording {
 
         public bool playbackOnStart;
 
+        public GameObject prefab;
+
 		/// <summary>
 		/// The different states the playback behavior can be in
 		/// </summary>
@@ -265,8 +267,8 @@ namespace CAVS.Recording {
 				if(actor == null){
 
 					if (actorRef == null) {
-						Debug.LogError ("Unable to find the resource you wanted to use to represent the actor named: "+currentLoadedRecording.getActorName (id)+"! Using a cube instead");
-						actor = GameObject.CreatePrimitive (PrimitiveType.Cube);
+						Debug.LogError ("Unable to find the resource you wanted to use to represent the actor named: "+currentLoadedRecording.getActorName (id)+"! Using prefab instead");
+                        actor = GameObject.Instantiate(prefab);
 					} else {
 						actor = GameObject.Instantiate (actorRef);
 					}
