@@ -1,1 +1,2 @@
-# ped-sim-city
+# ave-crosswalk
+Crosswalk study environment for AVENUE Simulator
